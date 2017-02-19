@@ -167,44 +167,6 @@ func handleTask(w http.ResponseWriter, r *http.Request) {
 		//動画の場合
 	case *linebot.VideoMessage:
 		responseMessage = linebot.NewTextMessage("動画です")
-		// 動画情報の取得
-		content, err := bot.GetMessageContent(message.ID).Do()
-		if err != nil {
-			log.Errorf(c, "Load error: %v", err)
-			return
-		}
-		defer content.Content.Close()
-
-		// バイナリデータからimage.Imageを生成
-		img, err2 := decodeImage(content)
-		if err2 != nil {
-			log.Errorf(c, "Load error: %v", err2)
-			return
-		}
-
-		// サムネイルの作成
-		thumbnail := resize.Thumbnail(300, 300, img, resize.Lanczos3)
-
-		// Cloud Storageのパス設定
-		origPath := "images/" + message.ID + ".mp4"
-		thumbnailPath := "thumbnails/" + message.ID + ".mp4"
-
-		// Cloud Storageへ書き込み
-		writeError1 := writeImage(c, img, origPath)
-		writeError2 := writeImage(c, thumbnail, thumbnailPath)
-
-		// エラーチェック
-		if writeError1 == nil && writeError2 == nil {
-			// 画像メッセージの生成
-			origURL := bucketURLBase + bucketName + "/" + origPath
-			thumbnailURL := bucketURLBase + bucketName + "/" + thumbnailPath
-			responseMessage = linebot.NewImageMessage(origURL, thumbnailURL)
-		} else {
-			log.Errorf(c, "Write Error1: %v", writeError1)
-			log.Errorf(c, "Write Error2: %v", writeError2)
-			// テキストメッセージの生成
-			responseMessage = linebot.NewTextMessage("失敗しました。。。")
-		}
 
 	default:
 		responseMessage = linebot.NewTextMessage("未対応です。。。")
